@@ -55,14 +55,38 @@ MakeConstruct6 <- function(redcap_data) {
   cons6_vars <- cbind(
     french_vars[,c('french_at_home','family_french_num')],
     reading_vars[,'family_readers_num'],
-    book_vars[,c('book_at_home_lecture','book_at_home_enfant','book_at_home_autre')],
-    educ_vars[,'parent_involvedEducation'])
+    book_vars[,c('book_at_home_lecture','book_at_home_enfant','book_at_home_autre', "educ_vars[,'parent_involvedEducation']")])
   composite <- composite_index(cons6_vars,
                                control_key=redcap_data$redcap_event_name=='baseline_arm_1')  
   output_construct <- as.data.frame(cbind(redcap_data$record_id,composite,cons6_vars))
   names(output_construct)[1] <- 'record_id'
   names(output_construct)[5] <- 'family_readers_num'
   names(output_construct)[9] <- 'parent_involvedEducation'
+  return(output_construct)
+}
+
+MakeConstruct6_New <- function(redcap_data) {
+  ## Household language and literacy background
+  # (1) binary measure of whether household adults speak French
+  # (2) number of family adults speaking French
+  # (3) number of family adults who read
+  # (4) binary measure of whether household has "reading books" (livre du lecture, text books)
+  # (5) binary measure of whether household has children's books (livre pour enfant)
+  # (6) binary measure of whether household has other reading material (livres, journaux, ou autres choses à lire)
+  # (7) scalar of 11 items for how adults support children's education - removed because doesn't exist for control kids
+  
+  french_vars <- family_french(redcap_data)
+  book_vars <- book_at_home(redcap_data)
+  reading_vars <- family_readers(redcap_data)
+  cons6_vars <- cbind(
+    french_vars[,c('french_at_home','family_french_num')],
+    reading_vars[,'family_readers_num'],
+    book_vars[,c('book_at_home_lecture','book_at_home_enfant','book_at_home_autre')])  # Henry: Removed educ_vars[,'parent_involvedEducation'], because doesn't exist for control group
+  composite <- composite_index(cons6_vars,
+                               control_key=redcap_data$redcap_event_name=='baseline_arm_1')  
+  output_construct <- as.data.frame(cbind(redcap_data$record_id,composite,cons6_vars))
+  names(output_construct)[1] <- 'record_id'
+  names(output_construct)[5] <- 'family_readers_num'
   return(output_construct)
 }
 
@@ -92,6 +116,31 @@ MakeConstruct7 <- function(redcap_data) {
   output_construct <- as.data.frame(cbind(redcap_data$record_id,composite,cons7_vars))
   names(output_construct)[1] <- 'record_id'
   names(output_construct)[3:5] <- c('SES_inventory','Parent_education','Caretaker_IsFarmer')
+  return(output_construct)
+}
+
+MakeConstruct7_New <- function(redcap_data) {
+  ## Socioeconomic Status
+  # (1) Household object inventory (0-15) from EGRA
+  # (2) Ordinal measure of parents' education - removed because not collected for control group
+  # (3) Binary measure of whether caretakers are farmers (this variable is REVERSE CODED in that we hypothesize TRUE/1 predicts of lower outcome scores)
+  
+  # Household object inventory
+  ses_vars <- ses_inventory(redcap_data)
+  
+  # Binary caretaker-is-farmer variable. If either mother OR father is reported as farmer, this variable is 1/TRUE
+  farm_vars <- caretaker_job(redcap_data)
+  
+  # Combine in composite measure
+  cons7_vars <- cbind(
+    ses_vars$ses_score,
+    as.numeric(farm_vars$caretaker_farmer))
+  composite <- composite_index(cons7_vars,
+                               control_key=redcap_data$redcap_event_name=='baseline_arm_1',
+                               col_key=c(1,-1)) # Reverse-score the farmer measure  
+  output_construct <- as.data.frame(cbind(redcap_data$record_id,composite,cons7_vars))
+  names(output_construct)[1] <- 'record_id'
+  names(output_construct)[3:4] <- c('SES_inventory','Caretaker_IsFarmer')
   return(output_construct)
 }
 
